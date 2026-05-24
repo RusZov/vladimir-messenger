@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Владимир — Защищённый P2P Мессенджер</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <h1>Владимир</h1>
+                </div>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Поиск сети...</span>
+                </div>
+            </div>
+
+            <div class="mode-indicator" id="modeIndicator">
+                <div class="mode-icon">🌐</div>
+                <span>Режим: Интернет</span>
+            </div>
+
+            <div class="contacts-section">
+                <div class="section-header">
+                    <h2>Контакты</h2>
+                    <button class="add-contact-btn" id="addContactBtn" title="Добавить контакт">+</button>
+                </div>
+                <div class="contacts-list" id="contactsList">
+                    <!-- Контакты будут добавлены через JS -->
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <button class="settings-btn" id="settingsBtn">
+                    <span>⚙️ Настройки</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Основная область чата -->
+        <main class="chat-area">
+            <div class="chat-header" id="chatHeader">
+                <div class="chat-info">
+                    <h2 id="currentChatName">Выберите контакт</h2>
+                    <p id="currentChatStatus" class="chat-status">Оффлайн</p>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn" id="voiceCallBtn" title="Голосовой звонок">📞</button>
+                    <button class="action-btn" id="videoCallBtn" title="Видеозвонок">📹</button>
+                    <button class="action-btn" id="groupChatBtn" title="Создать группу">👥</button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="welcome-icon">🔐</div>
+                    <h3>Добро пожаловать в Владимир</h3>
+                    <p>Защищённый P2P мессенджер с поддержкой офлайн-режима</p>
+                    <div class="features">
+                        <div class="feature-item">
+                            <span class="feature-icon">🌐</span>
+                            <span>Tor для интернета</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">📶</span>
+                            <span>Локальная сеть</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">📱</span>
+                            <span>BLE Mesh</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area" id="inputArea" style="display: none;">
+                <div class="file-preview" id="filePreview"></div>
+                <div class="input-wrapper">
+                    <button class="attach-btn" id="attachBtn" title="Прикрепить файл">📎</button>
+                    <input type="file" id="fileInput" style="display: none;" multiple>
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Введите сообщение..." 
+                        rows="1"
+                        autocomplete="off"
+                    ></textarea>
+                    <button class="emoji-btn" id="emojiBtn" title="Эмодзи">😊</button>
+                    <button class="send-btn" id="sendBtn" title="Отправить">
+                        <span>➤</span>
+                    </button>
+                </div>
+                <div class="input-hints">
+                    <span>Enter — отправить, Shift+Enter — новая строка</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Панель информации о контакте -->
+        <aside class="info-panel" id="infoPanel">
+            <div class="info-header">
+                <h2>Информация</h2>
+                <button class="close-panel-btn" id="closeInfoPanel">×</button>
+            </div>
+            <div class="info-content" id="infoContent">
+                <p>Выберите контакт для просмотра информации</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Модальное окно добавления контакта -->
+    <div class="modal" id="addContactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить контакт</h3>
+                <button class="close-modal-btn" id="closeAddContactModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="qr-section">
+                    <div class="qr-placeholder" id="myQRCode">
+                        <div class="qr-icon">📱</div>
+                        <p>Ваш QR-код</p>
+                    </div>
+                    <button class="btn-secondary" id="showQRBtn">Показать мой QR</button>
+                </div>
+                <div class="input-group">
+                    <label for="contactKey">Публичный ключ контакта</label>
+                    <textarea id="contactKey" placeholder="Вставьте публичный ключ или отсканируйте QR"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="contactName">Имя контакта</label>
+                    <input type="text" id="contactName" placeholder="Введите имя">
+                </div>
+                <button class="btn-primary" id="confirmAddContact">Добавить контакт</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Настройки</h3>
+                <button class="close-modal-btn" id="closeSettingsModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="general">Общие</button>
+                    <button class="tab-btn" data-tab="security">Безопасность</button>
+                    <button class="tab-btn" data-tab="network">Сеть</button>
+                </div>
+                <div class="tab-content active" id="generalTab">
+                    <div class="setting-item">
+                        <label>Тема оформления</label>
+                        <select id="themeSelect">
+                            <option value="system">Системная</option>
+                            <option value="light">Светлая</option>
+                            <option value="dark">Тёмная</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Язык</label>
+                        <select id="languageSelect">
+                            <option value="ru">Русский</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="notificationsEnabled" checked>
+                            Уведомления
+                        </label>
+                    </div>
+                </div>
+                <div class="tab-content" id="securityTab">
+                    <div class="setting-item">
+                        <label>Период автоблокировки</label>
+                        <select id="autoLockSelect">
+                            <option value="1">1 минута</option>
+                            <option value="5">5 минут</option>
+                            <option value="15">15 минут</option>
+                            <option value="never">Никогда</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="disappearingMessages">
+                            Исчезающие сообщения
+                        </label>
+                    </div>
+                    <button class="btn-danger" id="clearKeysBtn">Удалить все ключи</button>
+                </div>
+                <div class="tab-content" id="networkTab">
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableTor" checked>
+                            Использовать Tor
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableLAN" checked>
+                            Локальная сеть (UDP)
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableBLE">
+                            BLE Mesh (экспериментально)
+                        </label>
+                    </div>
+                    <div class="network-stats" id="networkStats">
+                        <h4>Статистика сети</h4>
+                        <div class="stat-row">
+                            <span>Подключено узлов:</span>
+                            <span id="peerCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Средняя задержка:</span>
+                            <span id="avgLatency">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомления -->
+    <div class="notifications-container" id="notificationsContainer"></div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
